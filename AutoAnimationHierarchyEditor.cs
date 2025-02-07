@@ -7,8 +7,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 	
-public class AnimationHierarchyEditor : EditorWindow {
-	private static int columnWidth = 300;
+public class AutoAnimationHierarchyEditor : EditorWindow {
+	private static int columnWidth = 200;
 	
 	private Animator animatorObject;
 	private List<AnimationClip> animationClips;
@@ -18,14 +18,14 @@ public class AnimationHierarchyEditor : EditorWindow {
 	Dictionary<string, string> tempPathOverrides;
 
 	private Vector2 scrollPos = Vector2.zero;
-	
-	[MenuItem("Window/Animation Hierarchy Editor")]
+
+	[MenuItem("Tools/Auto Animation Hierarchy Editor")]
 	static void ShowWindow() {
-		EditorWindow.GetWindow<AnimationHierarchyEditor>();
+		EditorWindow.GetWindow<AutoAnimationHierarchyEditor>();
 	}
 
 
-	public AnimationHierarchyEditor(){
+	public AutoAnimationHierarchyEditor(){
 		animationClips = new List<AnimationClip>();
 		tempPathOverrides = new Dictionary<string, string>();
 	}
@@ -53,6 +53,8 @@ public class AnimationHierarchyEditor : EditorWindow {
 
 	private string sOriginalRoot = "Root";
 	private string sNewRoot = "SomeNewObject/Root";
+
+private Vector2 horizScrollPos;
 
 	void OnGUI() {
 		if (Event.current.type == EventType.ValidateCommand) {
@@ -112,16 +114,22 @@ public class AnimationHierarchyEditor : EditorWindow {
 			EditorGUILayout.BeginHorizontal();
 			GUILayout.Label("Reference path:", GUILayout.Width(columnWidth));
 			GUILayout.Label("Animated properties:", GUILayout.Width(columnWidth*0.5f));
-			GUILayout.Label("(Count)", GUILayout.Width(60));
+			GUILayout.Label("(Count)", GUILayout.Width(30));
 			GUILayout.Label("Object:", GUILayout.Width(columnWidth));
 			EditorGUILayout.EndHorizontal();
 			
 			if (paths != null) 
 			{
+
+horizScrollPos = EditorGUILayout.BeginScrollView(horizScrollPos, GUIStyle.none);
+
 				foreach (string path in pathsKeys) 
 				{
 					GUICreatePathItem(path);
 				}
+
+EditorGUILayout.EndScrollView();
+
 			}
 			
 			GUILayout.Space(40);
@@ -132,11 +140,48 @@ public class AnimationHierarchyEditor : EditorWindow {
 	}
 
 
+// object matching: start
+
+// change value to return max n best matches
+private GameObject[] gameObjectReferences = new GameObject[5];
+
+private string GetFullPath(GameObject gameObject)
+{
+	if (gameObject.transform.parent == null)
+		return gameObject.name;
+	else
+		return GetFullPath(gameObject.transform.parent.gameObject) + "/" + gameObject.name;
+}
+
+private void SearchHierarchy(GameObject current, string[] pathParts, ref int matchIndex, string path)
+{
+	if (current.name == pathParts[pathParts.Length - 1])
+	{
+		string fullPath = GetFullPath(current);
+		if (fullPath.EndsWith(path))
+		{
+			gameObjectReferences[matchIndex] = current;
+			matchIndex++;
+			if (matchIndex >= gameObjectReferences.Length) return;
+		}
+	}
+	foreach (Transform child in current.transform)
+	{
+		SearchHierarchy(child.gameObject, pathParts, ref matchIndex, path);
+		if (matchIndex >= gameObjectReferences.Length) return;
+	}
+}
+
+// object matching: end
+
+
 	void GUICreatePathItem(string path) {
 		string newPath = path;
 		GameObject obj = FindObjectInRoot(path);
 		GameObject newObj;
 		ArrayList properties = (ArrayList)paths[path];
+
+
 
 		string pathOverride = path;
 
@@ -154,7 +199,7 @@ public class AnimationHierarchyEditor : EditorWindow {
 		
 		EditorGUILayout.LabelField(
 			properties != null ? properties.Count.ToString() : "0",
-			GUILayout.Width(60)
+			GUILayout.Width(30)
 			);
 		
 		Color standardColor = GUI.color;
@@ -174,6 +219,45 @@ public class AnimationHierarchyEditor : EditorWindow {
 		
 		GUI.color = standardColor;
 		
+
+// object matching: start
+
+// create suggestions
+if (obj == null)
+{
+		for (int i = 0; i < gameObjectReferences.Length; i++)
+		{
+			gameObjectReferences[i] = null;
+		}
+
+		string[] pathParts = path.Split('/');
+		if (pathParts.Length != 0)
+		{
+			GameObject[] rootObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+
+			int matchIndex = 0;
+			foreach (var root in rootObjects)
+			{
+				SearchHierarchy(root, pathParts, ref matchIndex, path);
+				if (matchIndex >= gameObjectReferences.Length)
+					break;
+			}
+
+			for (int i = 0; i<gameObjectReferences.Length; i++)
+			{
+				if (gameObjectReferences[i] != null)
+				{
+					gameObjectReferences[i] = (GameObject)EditorGUILayout.ObjectField(gameObjectReferences[i], typeof(GameObject), true, GUILayout.Width(columnWidth/2));
+					if (GUILayout.Button("Change", GUILayout.Width(60)))
+					{
+						newObj = gameObjectReferences[i];
+					}
+				}
+			}
+		}
+}
+// object matching: end
+
 		EditorGUILayout.EndHorizontal();
 		
 		try {

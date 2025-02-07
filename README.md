@@ -1,10 +1,15 @@
-__PROJECT ARCHIVED__
+Unity Auto Animation Hierarchy Editor
+================================
 
-This project is not maintained anymore. If you still find it useful and would love to develop it further, feel free to fork it!
+2025/02/07
+Forked from "Animation Hierarchy Editor" by s-m-k.
+- Change menu location to Tools > Auto Animation Hierarchy Editor.
+- Provides suggestions for matching Gameobjects (to up 5).
 
+----------------------
 
 Unity Animation Hierarchy Editor
-================================
+---
 
 This utility will aid you in refactoring your Unity animations.
 
