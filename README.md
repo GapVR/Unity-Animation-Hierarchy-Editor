@@ -1,4 +1,4 @@
-Unity Auto Animation Hierarchy Editor
+Unity (Auto) Animation Hierarchy Editor
 ================================
 
 2025/02/07
