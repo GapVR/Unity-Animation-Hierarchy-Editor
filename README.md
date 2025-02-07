@@ -2,7 +2,9 @@ Unity Auto Animation Hierarchy Editor
 ================================
 
 2025/02/07
+
 Forked from "Animation Hierarchy Editor" by s-m-k.
+
 - Change menu location to Tools > Auto Animation Hierarchy Editor.
 - Provides suggestions for matching Gameobjects (to up 5).
 
