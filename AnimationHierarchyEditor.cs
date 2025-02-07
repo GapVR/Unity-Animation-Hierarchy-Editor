@@ -132,6 +132,40 @@ public class AnimationHierarchyEditor : EditorWindow {
 	}
 
 
+// object matching: start
+
+// change value to return max n best matches
+private GameObject[] gameObjectReferences = new GameObject[5];
+
+private string GetFullPath(GameObject gameObject)
+{
+	if (gameObject.transform.parent == null)
+		return gameObject.name;
+	else
+		return GetFullPath(gameObject.transform.parent.gameObject) + "/" + gameObject.name;
+}
+
+private void SearchHierarchy(GameObject current, string[] pathParts, ref int matchIndex, string path)
+{
+	if (current.name == pathParts[pathParts.Length - 1])
+	{
+		string fullPath = GetFullPath(current);
+		if (fullPath.EndsWith(path))
+		{
+			gameObjectReferences[matchIndex] = current;
+			matchIndex++;
+			if (matchIndex >= gameObjectReferences.Length) return;
+		}
+	}
+	foreach (Transform child in current.transform)
+	{
+		SearchHierarchy(child.gameObject, pathParts, ref matchIndex, path);
+		if (matchIndex >= gameObjectReferences.Length) return;
+	}
+}
+// object matching: end
+
+
 	void GUICreatePathItem(string path) {
 		string newPath = path;
 		GameObject obj = FindObjectInRoot(path);
@@ -174,6 +208,45 @@ public class AnimationHierarchyEditor : EditorWindow {
 		
 		GUI.color = standardColor;
 		
+
+// object matching: start
+
+// create suggestions
+if (obj == null)
+{
+		for (int i = 0; i < gameObjectReferences.Length; i++)
+		{
+			gameObjectReferences[i] = null;
+		}
+
+		string[] pathParts = path.Split('/');
+		if (pathParts.Length != 0)
+		{
+			GameObject[] rootObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+
+			int matchIndex = 0;
+			foreach (var root in rootObjects)
+			{
+				SearchHierarchy(root, pathParts, ref matchIndex, path);
+				if (matchIndex >= gameObjectReferences.Length)
+					break;
+			}
+
+			for (int i = 0; i<gameObjectReferences.Length; i++)
+			{
+				if (gameObjectReferences[i] != null)
+				{
+					gameObjectReferences[i] = (GameObject)EditorGUILayout.ObjectField(gameObjectReferences[i], typeof(GameObject), true, GUILayout.Width(columnWidth/2));
+					if (GUILayout.Button("Change", GUILayout.Width(60)))
+					{
+						newObj = gameObjectReferences[i];
+					}
+				}
+			}
+		}
+}
+// object matching: end
+
 		EditorGUILayout.EndHorizontal();
 		
 		try {
