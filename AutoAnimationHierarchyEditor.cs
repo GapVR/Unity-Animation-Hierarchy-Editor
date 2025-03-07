@@ -1,3 +1,6 @@
+// (Auto) Animation Hierarchy Editor
+// 20250307
+// https://github.com/GapVR
 
 #if UNITY_EDITOR
 
