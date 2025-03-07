@@ -143,34 +143,7 @@ EditorGUILayout.EndScrollView();
 // object matching: start
 
 // change value to return max n best matches
-private GameObject[] gameObjectReferences = new GameObject[5];
-
-private string GetFullPath(GameObject gameObject)
-{
-	if (gameObject.transform.parent == null)
-		return gameObject.name;
-	else
-		return GetFullPath(gameObject.transform.parent.gameObject) + "/" + gameObject.name;
-}
-
-private void SearchHierarchy(GameObject current, string[] pathParts, ref int matchIndex, string path)
-{
-	if (current.name == pathParts[pathParts.Length - 1])
-	{
-		string fullPath = GetFullPath(current);
-		if (fullPath.EndsWith(path))
-		{
-			gameObjectReferences[matchIndex] = current;
-			matchIndex++;
-			if (matchIndex >= gameObjectReferences.Length) return;
-		}
-	}
-	foreach (Transform child in current.transform)
-	{
-		SearchHierarchy(child.gameObject, pathParts, ref matchIndex, path);
-		if (matchIndex >= gameObjectReferences.Length) return;
-	}
-}
+private List<GameObject> gameObjectReferences = new List<GameObject>();
 
 // object matching: end
 
@@ -225,25 +198,24 @@ private void SearchHierarchy(GameObject current, string[] pathParts, ref int mat
 // create suggestions
 if (obj == null)
 {
-		for (int i = 0; i < gameObjectReferences.Length; i++)
-		{
-			gameObjectReferences[i] = null;
-		}
+		gameObjectReferences.Clear();
 
 		string[] pathParts = path.Split('/');
 		if (pathParts.Length != 0)
 		{
-			GameObject[] rootObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+			string objname = pathParts[pathParts.Length - 1];
 
-			int matchIndex = 0;
-			foreach (var root in rootObjects)
+			GameObject[] allGameObjects = GameObject.FindObjectsOfType<GameObject>(true);
+
+			foreach (GameObject gg in allGameObjects)
 			{
-				SearchHierarchy(root, pathParts, ref matchIndex, path);
-				if (matchIndex >= gameObjectReferences.Length)
-					break;
+				if (gg.name == objname)
+				{
+					gameObjectReferences.Add(gg);
+				}
 			}
 
-			for (int i = 0; i<gameObjectReferences.Length; i++)
+			for (int i = 0; i<gameObjectReferences.Count; i++)
 			{
 				if (gameObjectReferences[i] != null)
 				{
