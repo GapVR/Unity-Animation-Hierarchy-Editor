@@ -1,6 +1,7 @@
 // (Auto) Animation Hierarchy Editor
 // 20250307
 // https://github.com/GapVR
+// forked from https://github.com/s-m-k/Unity-Animation-Hierarchy-Editor
 
 #if UNITY_EDITOR
 
